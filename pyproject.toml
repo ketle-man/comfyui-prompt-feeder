@@ -1,0 +1,13 @@
+[project]
+name = "comfyui-prompt-feeder"
+description = "A ComfyUI custom node for looping through text prompts with an editor and visual library UI."
+version = "0.1.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/ketle-man/comfyui-prompt-feeder"
+
+[tool.comfy]
+PublisherId = "statsu"
+DisplayName = "ComfyUI Prompt Feeder"
+Icon = "https://raw.githubusercontent.com/ketle-man/comfyui-prompt-feeder/master/docs/thumb.png"
