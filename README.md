@@ -1,6 +1,8 @@
+English | [日本語](README.ja.md) | [中文](README.zh.md)
+
 # ComfyUI Prompt Feeder
 
-フォルダ内のテキストプロンプトを順次送り出すComfyUIカスタムノード。ノード上への直接記入と、ライブラリからの `.txt` 選択の2つの入力方法に対応します。
+A ComfyUI custom node that feeds text prompts from a folder one at a time. Supports two input methods: typing directly on the node, or selecting `.txt` files from a built-in library.
 
 ## Screenshots
 
@@ -8,73 +10,73 @@
 <tr>
 <td align="center" width="50%">
 <img src="docs/1_node_edit.png" width="320" alt="edit mode"><br>
-① <code>edit</code>モード：ノード上に直接記入
+① <code>edit</code> mode: type prompts directly on the node
 </td>
 <td align="center" width="50%">
 <img src="docs/2_node_library.png" width="320" alt="library mode"><br>
-② <code>library</code>モード：フォルダ内の<code>.txt</code>を順次送出
+② <code>library</code> mode: feed <code>.txt</code> files from a folder one at a time
 </td>
 </tr>
 <tr>
 <td align="center" width="50%">
 <img src="docs/3_library.png" width="320" alt="Prompt Library"><br>
-③ Prompt Library：3ペインでフォルダ・ファイルを選択／編集
+③ Prompt Library: a 3-pane picker for browsing/editing folders and files
 </td>
 <td align="center" width="50%">
 <img src="docs/4_external_paths.png" width="320" alt="External Paths"><br>
-④ External Paths：他ノードの<code>.txt</code>データを個別パス登録して流用
+④ External Paths: register other node packs' <code>.txt</code> data folders for reuse
 </td>
 </tr>
 </table>
 
 ## Features
 
-- **2つの入力モード**:
-  - `edit`: ノード上のテキストエリアに直接記入。1行＝1プロンプト（空行はスキップ）。
-  - `library`: ライブラリで選択した `.txt` ファイルを行分割し、1行＝1プロンプトとして連結。editモードと同一扱いでループします。
+- **Two input modes**:
+  - `edit`: type directly into the text area on the node. One prompt per line (empty lines are skipped).
+  - `library`: reads the selected `.txt` files from the library, splits them into lines, and loops through them exactly like edit mode.
 
 - **Playback Controls**:
-  - ▶ **Run**: インデックスをリセットして自動ループを開始。
-  - ⏹ **Stop**: 自動ループを停止。
-  - 🔗 **Sel ON/OFF**: ライブラリ選択ファイルのみ使うか、フォルダ内全ファイルを使うかを切替（libraryモード時のみ有効）。
-  - 📂 **Lib**: プロンプトライブラリを開く（libraryモード時のみ有効）。
+  - ▶ **Run**: resets the index and starts the auto-loop.
+  - ⏹ **Stop**: stops the auto-loop.
+  - 🔗 **Sel ON/OFF**: toggles between using only the files selected in the library, or every file in the folder (library mode only).
+  - 📂 **Lib**: opens the Prompt Library (library mode only).
 
-- **Prompt Library（3ペイン）**:
-  - 左：データソース切替＋フォルダツリー／中：`.txt` 一覧（先頭プレビュー付き）／右：内容プレビュー＋編集。
-  - 右ペインの **EDIT** ボタンでロック解除→編集→**SAVE** でファイルに書き戻し可能。
-  - 右ペインのファイル名横の **✎** ボタンでファイル名を変更可能（Enterで確定／Escでキャンセル、`prompt-feeder-data` のみ）。
-  - 中ペインの **＋ New** ボタンで新規 `.txt` ファイルを作成し、そのままモーダル内編集機能で内容を記入・保存できます（`prompt-feeder-data` のみ）。
-  - プリセット保存・読込・削除に対応。全選択／全解除あり。
+- **Prompt Library (3-pane picker)**:
+  - Left: data source switcher + folder tree / Middle: `.txt` file list (with a first-line preview) / Right: content preview + editor.
+  - The **EDIT** button unlocks editing → edit → **SAVE** writes the changes back to the file.
+  - The **✎** button next to the file name in the right pane renames the file (Enter to confirm, Esc to cancel; `prompt-feeder-data` only).
+  - The **＋ New** button in the middle pane creates a new `.txt` file and opens it directly in the same in-modal editor to write and save its content (`prompt-feeder-data` only).
+  - Presets can be saved, loaded, and deleted. Select All / Deselect All are also available.
 
-- **データソース（外部パス登録）**:
-  - ライブラリ左上の **⚙** ボタンから、他のワイルドカード系・プロンプト系カスタムノードが持つ既存 `.txt` データフォルダを「表示名」付きで個別に登録できます（**複数登録可**）。
-  - 登録するパスは ComfyUI フォルダ配下限定（例: `custom_nodes/ComfyUI-Impact-Pack/wildcards`、`user/default/other-node/data`）。絶対パス／ComfyUIフォルダからの相対パスのどちらでも入力可能です。
-  - 登録した外部パスは `source_root` の選択肢（🧩 表示名）としてノード・ライブラリ両方に反映され、そのフォルダ配下だけをツリー表示するため、`custom_nodes` 全体をツリー走査するより無関係なフォルダが表示されません。
-  - 登録した外部パスはデータ保護のため**読み取り専用**（EDIT/SAVE・＋ New・✎リネームは無効）。書き込みは常に `prompt-feeder-data` でのみ可能です。
-  - フォルダツリーからは `__pycache__` / `.git` / `node_modules` / `venv` などの隠し・無関係フォルダは自動的に除外されます。
-  - 外部パスの登録情報は `ComfyUI/user/default/prompt-feeder-external-paths.json` に保存されます。
+- **Data sources (registering external paths)**:
+  - The **⚙** button at the top-left of the library lets you register existing `.txt` data folders from other wildcard/prompt custom node packs, each under its own label (**multiple entries supported**).
+  - Registered paths must stay inside the ComfyUI directory (e.g. `custom_nodes/ComfyUI-Impact-Pack/wildcards`, `user/default/other-node/data`). You can enter either an absolute path or a path relative to the ComfyUI folder.
+  - Each registered path appears as a `source_root` choice (🧩 label) on both the node and the library, and the folder tree is scoped to just that folder — so, unlike scanning the whole `custom_nodes` tree, unrelated folders won't show up.
+  - Registered external paths are **read-only** for data safety (EDIT/SAVE, ＋ New, and ✎ rename are all disabled there). Writing is always limited to `prompt-feeder-data`.
+  - Hidden/irrelevant folders such as `__pycache__`, `.git`, `node_modules`, and `venv` are automatically excluded from the folder tree.
+  - Registered external paths are stored in `ComfyUI/user/default/prompt-feeder-external-paths.json`.
 
-- **プレビュー欄**:
-  - 実行しなくても現在の設定内容を表示（アイドル時プレビュー）。`index` 等の変更に自動追従。
-  - 右上に `現在位置 / 総件数` カウンタ（例: `2 / 6`）を表示。
-  - 現在のモードで無効なウィジェットは減光表示（半透明＋操作不可）。
+- **Preview panel**:
+  - Shows the current configuration's output even without running the workflow (idle preview). Updates automatically when `index` and related widgets change.
+  - Shows a `current position / total count` counter in the top-right corner (e.g. `2 / 6`).
+  - Widgets that are irrelevant to the current mode are dimmed (semi-transparent and disabled).
 
-- **Flexible Sorting & Range**（libraryモード）:
-  - Sort modes: `ascending`（自然順） / `descending` / `random`（`seed` で再現可能）。
-  - Range control via `start_index` / `end_index`（※ファイル単位、後述）。
+- **Flexible Sorting & Range** (library mode):
+  - Sort modes: `ascending` (natural sort) / `descending` / `random` (reproducible via `seed`).
+  - Range control via `start_index` / `end_index` (per-file, see below).
 
 - **i18n Support**:
-  - UI言語はブラウザの言語設定から自動判定。
-  - 対応: **English** / **日本語** / **中文（简体）**
+  - The UI language is detected automatically from the browser's language setting.
+  - Supported: **English** / **日本語** / **中文（简体）**
 
 ## Installation
 
-1. このフォルダをComfyUIの `custom_nodes` ディレクトリにコピー（フォルダ名は `comfyui-prompt-feeder` のまま）。
-2. ComfyUIを起動（または再起動）。`Prompt Feeder` ノードが `text` カテゴリに表示されます。
+1. Copy this folder into ComfyUI's `custom_nodes` directory (keep the folder name as `comfyui-prompt-feeder`).
+2. Start (or restart) ComfyUI. The `Prompt Feeder` node will appear in the `text` category.
 
 ## Prompt Placement
 
-以下のディレクトリに `.txt` ファイルを配置します:
+Place your `.txt` files under the following directory:
 
 ```text
 ComfyUI/
@@ -87,56 +89,56 @@ ComfyUI/
             └── sample.txt
 ```
 
-- ノードの `directory` フィールドに `prompt-feeder-data` からの相対パスを入力。空欄でroot直下を使用。
-- 各 `.txt` はUTF-8・上限100KB。1行＝1プロンプトとして扱われます（空行スキップ）。
-- **Security**: 各データソース（`prompt-feeder-data` および登録済み外部パス）の配下外へのアクセスはブロック（パストラバーサル対策）。シンボリックリンクは除外。外部パスの登録自体もComfyUIフォルダ配下に限定され、それ以外の場所は登録できません。登録済み外部パスは読み取り専用で、編集（EDIT/SAVE）・新規作成（＋ New）・リネーム（✎）は `prompt-feeder-data` でのみ可能。
+- Enter a path relative to `prompt-feeder-data` in the node's `directory` field. Leave it empty to use the root folder.
+- Each `.txt` file must be UTF-8 and up to 100KB. One line is treated as one prompt (empty lines are skipped).
+- **Security**: access outside each data source (`prompt-feeder-data` and any registered external paths) is blocked (path traversal protection). Symlinks are excluded. Registering an external path itself is also limited to locations inside the ComfyUI folder — nothing outside it can be registered. Registered external paths are read-only; editing (EDIT/SAVE), creating (＋ New), and renaming (✎) are only possible in `prompt-feeder-data`.
 
 ## Parameters
 
 | Parameter | Description |
 | --- | --- |
-| `mode` | `edit`（直接記入） / `library`（ファイル選択） |
-| `text` | 直接記入欄（複数行）。editモード時のみ有効 |
-| `source_root` | データソース：`prompt-feeder-data`（読み書き可） / ⚙で登録した外部パス（読み取り専用）。libraryモード時のみ有効 |
-| `directory` | `source_root` 配下のサブフォルダ名。空欄でそのルート直下。libraryモード時のみ有効 |
-| `sort_mode` | `ascending`（自然順） / `descending` / `random`。libraryモード時のみ有効 |
-| `index` | 現在の出力位置。Runで自動更新 |
-| `start_index` | 読込範囲の開始（ファイル単位）。libraryモード時のみ有効 |
-| `end_index` | 読込範囲の終了（0＝末尾まで、ファイル単位）。libraryモード時のみ有効 |
-| `seed` | ランダムソート再現用。`sort_mode=random` のときのみ有効 |
-| `use_selection` | ライブラリ選択を使用するか（Selボタンで切替）。libraryモード時のみ有効 |
+| `mode` | `edit` (type directly) / `library` (pick files) |
+| `text` | Direct-entry field (multi-line). Only used in edit mode |
+| `source_root` | Data source: `prompt-feeder-data` (read/write) / an external path registered via ⚙ (read-only). Only used in library mode |
+| `directory` | Subfolder under `source_root`. Leave empty to use its root. Only used in library mode |
+| `sort_mode` | `ascending` (natural sort) / `descending` / `random`. Only used in library mode |
+| `index` | The current output position. Updated automatically by Run |
+| `start_index` | Start of the read range (per file). Only used in library mode |
+| `end_index` | End of the read range (0 = to the end, per file). Only used in library mode |
+| `seed` | Used to reproduce random sorting. Only relevant when `sort_mode=random` |
+| `use_selection` | Whether to use the library's file selection (toggled by the Sel button). Only used in library mode |
 
-出力: `STRING` × 1（`CLIP Text Encode` 等に接続）。
+Output: one `STRING` (connect it to `CLIP Text Encode`, etc.).
 
-## モード別・ウィジェット有効性
+## Widget availability by mode
 
-| 項目 | Editモード | Libraryモード |
+| Item | Edit mode | Library mode |
 | --- | --- | --- |
-| `mode` | ✅ 切替本体 | ✅ |
-| `text` | ✅ プロンプト源 | ❌ 無視される（表示は残る） |
-| `source_root` | ❌ 無視される | ✅ |
-| `directory` | ❌ 無視される | ✅ |
-| `sort_mode` | ❌ 無視される（入力行順固定） | ✅ |
+| `mode` | ✅ the switch itself | ✅ |
+| `text` | ✅ prompt source | ❌ ignored (still shown) |
+| `source_root` | ❌ ignored | ✅ |
+| `directory` | ❌ ignored | ✅ |
+| `sort_mode` | ❌ ignored (input line order is fixed) | ✅ |
 | `index` | ✅ | ✅ |
-| `start_index` / `end_index` | ❌ 無視される | ⚠️ 有効だが**ファイル単位**の範囲（行単位ではない） |
-| `seed` | ❌ 無視される | ⚠️ `sort_mode=random` のときのみ有効 |
-| `use_selection` / `Sel`ボタン | ❌ 無意味（ボタンは無効化済み） | ✅ |
-| `selected_files` | ❌ 無視される | ✅ |
-| `Lib`ボタン | ❌ 無効化済み | ✅ |
-| `control after generate` | ❌ seed自体が無意味のため連動して無意味 | ⚠️ random時のみ意味あり |
-| プレビュー＋カウンタ | ✅ | ✅ |
+| `start_index` / `end_index` | ❌ ignored | ⚠️ active, but the range is **per file**, not per line |
+| `seed` | ❌ ignored | ⚠️ only relevant when `sort_mode=random` |
+| `use_selection` / `Sel` button | ❌ meaningless (button is disabled) | ✅ |
+| `selected_files` | ❌ ignored | ✅ |
+| `Lib` button | ❌ disabled | ✅ |
+| `control after generate` | ❌ meaningless, since `seed` itself is meaningless | ⚠️ only meaningful with random |
+| Preview + counter | ✅ | ✅ |
 
-無効なウィジェットは減光表示されます（半透明＋値非表示＋操作不可）。値は保持されるため、モードを戻せば設定はそのまま使えます。
+Widgets that don't apply are dimmed (semi-transparent, value hidden, and disabled). Their values are preserved, so switching modes back keeps your settings intact.
 
 ## Notes
 
-- **注意**: `start_index` / `end_index` は**ファイル単位**の範囲指定です。行単位ではありません。例：2ファイル×3行構成で `start_index=1` にすると「2ファイル目以降」＝全体4行目からの出力になります。総件数はプレビュー欄のカウンタ（`x / N`）で確認できます。
-- ファイル名の数字（例: `a1.txt`, `a10.txt`）は自然順で正しくソートされます。
-- ライブラリで選択後 **Apply to Node** を押すと、フォルダ＋選択がノードに反映され、`mode` は自動で `library` に切り替わります。
-- 複数のPrompt Feederノードを同一ワークフローで独立動作可能です。
-- ループ中にキューエラーが発生した場合、Runボタンは自動で再有効化されます。
-- 対応形式: `.txt` のみ。
-- 外部パスを新規登録した直後は、ノード本体の `source_root` ドロップダウンの選択肢一覧にはページ再読み込みまで反映されない場合があります（ライブラリの **Apply to Node** 経由で反映する分には再読み込み不要です）。
+- **Note**: `start_index` / `end_index` define a range **per file**, not per line. Example: with 2 files of 3 lines each, `start_index=1` means "from the 2nd file onward" — i.e., from the overall 4th line. Check the preview panel's counter (`x / N`) for the total count.
+- Numbers in file names (e.g. `a1.txt`, `a10.txt`) are sorted correctly in natural order.
+- After selecting in the library, pressing **Apply to Node** applies the folder and selection to the node and automatically switches `mode` to `library`.
+- Multiple Prompt Feeder nodes can run independently in the same workflow.
+- If a queue error occurs mid-loop, the Run button is automatically re-enabled.
+- Supported format: `.txt` only.
+- Right after registering a new external path, it may not show up in the node's own `source_root` dropdown until the page is reloaded (applying it via the library's **Apply to Node** does not require a reload).
 
 ## License
 
