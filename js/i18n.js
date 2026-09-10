@@ -75,6 +75,8 @@ const LOCALES = {
         "node.stop_title": "Stop",
         "node.lib_title":  "Library",
         "node.sel_title":  "Toggle selection mode",
+        // language selector (header)
+        "lib.lang_tooltip": "UI language (default: English)",
     },
     ja: {
         "lib.title":                 "📝 Prompt Library",
@@ -150,6 +152,7 @@ const LOCALES = {
         "node.stop_title": "停止",
         "node.lib_title":  "ライブラリ",
         "node.sel_title":  "選択ファイルの使用切替",
+        "lib.lang_tooltip": "UI言語（既定: English）",
     },
     zh: {
         "lib.title":                 "📝 提示词库",
@@ -225,20 +228,47 @@ const LOCALES = {
         "node.stop_title": "停止",
         "node.lib_title":  "提示词库",
         "node.sel_title":  "切换选择模式",
+        "lib.lang_tooltip": "界面语言（默认: English）",
     },
 };
 
-function detectLang() {
-    const lang = (navigator.language || "en").toLowerCase();
-    if (lang.startsWith("ja")) return "ja";
-    if (lang.startsWith("zh")) return "zh";
+const STORAGE_KEY = "comfyui-prompt-feeder.lang";
+
+function loadLang() {
+    // Default channel: always English. No auto-binding on navigator.language.
+    // Users opt in explicitly via the library header language selector.
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === "ja" || saved === "zh" || saved === "en") return saved;
+    } catch (_) {}
     return "en";
 }
 
-const _lang = detectLang();
-const _locale = LOCALES[_lang] ?? LOCALES.en;
+let _lang = loadLang();
+
+export const LANG_OPTIONS = [
+    { value: "en", label: "English" },
+    { value: "ja", label: "日本語" },
+    { value: "zh", label: "中文（简体）" },
+];
+
+export function getLang() {
+    return _lang;
+}
+
+export function setLang(lang) {
+    if (lang !== "en" && lang !== "ja" && lang !== "zh") return _lang;
+    _lang = lang;
+    try {
+        localStorage.setItem(STORAGE_KEY, lang);
+    } catch (_) {}
+    return _lang;
+}
+
+const _locale = () => LOCALES[_lang] ?? LOCALES.en;
 
 export function t(key, ...args) {
-    const val = _locale[key] ?? LOCALES.en[key] ?? key;
+    const locale = _locale();
+    const val = locale[key] ?? LOCALES.en[key] ?? key;
     return typeof val === "function" ? val(...args) : val;
 }

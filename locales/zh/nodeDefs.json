@@ -1,0 +1,60 @@
+{
+  "PromptFeeder": {
+    "display_name": "Prompt Feeder",
+    "description": "每次从文件夹中逐条输出文本提示词（直接输入或从库中选择）。",
+    "inputs": {
+      "mode": {
+        "name": "模式",
+        "tooltip": "edit（直接输入）/ library（选择文件）",
+        "options": {
+          "edit": "edit",
+          "library": "library"
+        }
+      },
+      "text": {
+        "name": "文本",
+        "tooltip": "一行一条提示词。空行会被跳过。"
+      },
+      "source_root": {
+        "name": "数据源",
+        "tooltip": "数据源。通过⚙注册的外部路径为只读（用于复用其他节点包的现有提示词/wildcard类.txt数据）。"
+      },
+      "directory": {
+        "name": "文件夹",
+        "tooltip": "所选 source_root 下的子文件夹名。留空则使用其根目录。"
+      },
+      "sort_mode": {
+        "name": "排序",
+        "options": {
+          "ascending": "ascending",
+          "descending": "descending",
+          "random": "random"
+        }
+      },
+      "index": {
+        "name": "索引"
+      },
+      "start_index": {
+        "name": "起始索引"
+      },
+      "end_index": {
+        "name": "结束索引"
+      },
+      "seed": {
+        "name": "种子"
+      },
+      "use_selection": {
+        "name": "使用所选"
+      },
+      "selected_files": {
+        "name": "所选文件"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "STRING",
+        "tooltip": "单条提示词字符串。"
+      }
+    }
+  }
+}

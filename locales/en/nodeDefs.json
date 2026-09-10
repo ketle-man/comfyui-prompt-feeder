@@ -1,0 +1,60 @@
+{
+  "PromptFeeder": {
+    "display_name": "Prompt Feeder",
+    "description": "Feed text prompts from a folder one at a time (edit or library mode).",
+    "inputs": {
+      "mode": {
+        "name": "mode",
+        "tooltip": "edit (type directly) / library (pick files)",
+        "options": {
+          "edit": "edit",
+          "library": "library"
+        }
+      },
+      "text": {
+        "name": "text",
+        "tooltip": "One prompt per line. Empty lines are skipped."
+      },
+      "source_root": {
+        "name": "source_root",
+        "tooltip": "Data source. Registered external paths (via the library's Settings) are read-only (for reusing existing prompt/wildcard .txt files from other node packs)."
+      },
+      "directory": {
+        "name": "directory",
+        "tooltip": "Subfolder name within the selected source_root. Leave empty to use its root directory."
+      },
+      "sort_mode": {
+        "name": "sort_mode",
+        "options": {
+          "ascending": "ascending",
+          "descending": "descending",
+          "random": "random"
+        }
+      },
+      "index": {
+        "name": "index"
+      },
+      "start_index": {
+        "name": "start_index"
+      },
+      "end_index": {
+        "name": "end_index"
+      },
+      "seed": {
+        "name": "seed"
+      },
+      "use_selection": {
+        "name": "use_selection"
+      },
+      "selected_files": {
+        "name": "selected_files"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "STRING",
+        "tooltip": "One prompt string."
+      }
+    }
+  }
+}

@@ -65,9 +65,10 @@
   - 排序方式：`ascending`（自然顺序）／`descending`／`random`（可通过 `seed` 复现）。
   - 通过 `start_index` / `end_index` 控制范围（按文件为单位，详见下文）。
 
-- **i18n 多语言支持**：
-  - 界面语言根据浏览器语言设置自动判断。
-  - 支持：**English** / **日本語** / **中文（简体）**
+- **语言**：
+  - 节点与提示词库 UI **默认显示英文**（不会跟随浏览器语言自动切换）。
+  - 如需使用 日本語 / 中文（简体），请打开 Prompt Library，使用右上角的语言选择器切换。选择会保存在当前浏览器中，提示词库即时生效（节点上的按钮文本在页面重载后生效）。
+  - 节点槽位（输入/输出/提示）遵循 ComfyUI 官方 locale（`Comfy > Locale`），通过 `locales/` 下的 `en`/`ja`/`zh` nodeDefs 翻译提供（参见 Comfy-Org/ComfyUI#6558）。
 
 ## Installation（安装）
 

@@ -4,7 +4,7 @@
  */
 
 import { app } from "../../scripts/app.js";
-import { t } from "./i18n.js";
+import { t, getLang, setLang, LANG_OPTIONS } from "./i18n.js";
 
 const ROOT_PFDATA = "prompt-feeder-data";
 
@@ -37,13 +37,32 @@ function buildModal(node) {
                "background:#16213e;border-bottom:1px solid #333;flex-shrink:0;",
     });
     const titleEl  = el("span", { style: "font-size:15px;font-weight:bold;color:#e0e0ff;flex:1;" }, t("lib.title"));
+    // Per-user language opt-in (default: English, no browser auto-detect).
+    // Changing it re-opens the library so all labels re-render immediately.
+    const langSelect = el("select", {
+        style: "background:#1a1a2e;color:#ccc;border:1px solid #3a3a5a;" +
+               "border-radius:4px;padding:3px 4px;font-size:11px;flex-shrink:0;",
+    });
+    langSelect.title = t("lib.lang_tooltip");
+    for (const opt of LANG_OPTIONS) {
+        const o = document.createElement("option");
+        o.value = opt.value;
+        o.textContent = opt.label;
+        langSelect.appendChild(o);
+    }
+    langSelect.value = getLang();
+    langSelect.addEventListener("change", () => {
+        setLang(langSelect.value);
+        overlay.remove();
+        openPromptLibrary(node);
+    });
     const reloadBtn = mkBtn("↺", "#2a4a7a", t("lib.reload_tooltip"));
     reloadBtn.style.padding = "3px 9px";
     const closeBtn  = el("button", {
         style: "background:none;border:none;color:#aaa;font-size:18px;cursor:pointer;padding:4px 8px;",
     }, "✕");
     closeBtn.onclick = () => overlay.remove();
-    header.append(titleEl, reloadBtn, closeBtn);
+    header.append(titleEl, langSelect, reloadBtn, closeBtn);
 
     // ---- 3ペイン ----
     const body = el("div", {

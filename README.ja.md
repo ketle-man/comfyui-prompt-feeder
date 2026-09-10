@@ -65,9 +65,10 @@
   - Sort modes: `ascending`（自然順） / `descending` / `random`（`seed` で再現可能）。
   - Range control via `start_index` / `end_index`（※ファイル単位、後述）。
 
-- **i18n Support**:
-  - UI言語はブラウザの言語設定から自動判定。
-  - 対応: **English** / **日本語** / **中文（简体）**
+- **言語**:
+  - ノード・ライブラリUIは**既定でEnglish**です（ブラウザ言語への自動追従なし）。
+  - 日本語 / 中文（简体）を使う場合は、Prompt Libraryを開き、ヘッダー右上の言語セレクタで切り替えてください。選択はブラウザごとに保存され、ライブラリには即時反映されます（ノード上のボタン表示はページ再読み込み後に反映）。
+  - ノードのスロット（入力/出力/ツールチップ）は公式ComfyUIロケール（`Comfy > Locale`）に連動します（`locales/` 配下の `en`/`ja`/`zh` nodeDefs翻訳、Comfy-Org/ComfyUI#6558 参照）。
 
 ## Installation
 

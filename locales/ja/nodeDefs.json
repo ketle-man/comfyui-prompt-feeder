@@ -1,0 +1,60 @@
+{
+  "PromptFeeder": {
+    "display_name": "Prompt Feeder",
+    "description": "フォルダ内のテキストプロンプトを1件ずつ送り出します（直接記入またはライブラリ選択）。",
+    "inputs": {
+      "mode": {
+        "name": "モード",
+        "tooltip": "edit（直接記入）/ library（ファイル選択）",
+        "options": {
+          "edit": "edit",
+          "library": "library"
+        }
+      },
+      "text": {
+        "name": "テキスト",
+        "tooltip": "1行＝1プロンプト。空行はスキップされます。"
+      },
+      "source_root": {
+        "name": "データソース",
+        "tooltip": "データソース。⚙で登録した外部パスは読み取り専用です（他のノードパックの既存プロンプト/wildcard系.txtデータの流用用）。"
+      },
+      "directory": {
+        "name": "フォルダ",
+        "tooltip": "source_root配下のサブフォルダ名。空欄でルート直下を使用します。"
+      },
+      "sort_mode": {
+        "name": "ソート",
+        "options": {
+          "ascending": "ascending",
+          "descending": "descending",
+          "random": "random"
+        }
+      },
+      "index": {
+        "name": "インデックス"
+      },
+      "start_index": {
+        "name": "開始インデックス"
+      },
+      "end_index": {
+        "name": "終了インデックス"
+      },
+      "seed": {
+        "name": "シード"
+      },
+      "use_selection": {
+        "name": "選択を使用"
+      },
+      "selected_files": {
+        "name": "選択ファイル"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "STRING",
+        "tooltip": "1件分のプロンプト文字列。"
+      }
+    }
+  }
+}

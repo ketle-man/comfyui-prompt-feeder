@@ -65,9 +65,10 @@ A ComfyUI custom node that feeds text prompts from a folder one at a time. Suppo
   - Sort modes: `ascending` (natural sort) / `descending` / `random` (reproducible via `seed`).
   - Range control via `start_index` / `end_index` (per-file, see below).
 
-- **i18n Support**:
-  - The UI language is detected automatically from the browser's language setting.
-  - Supported: **English** / **日本語** / **中文（简体）**
+- **Language**:
+  - The node and library UI is **English by default** (no browser-language auto-switching).
+  - To use 日本語 / 中文（简体）, open the Prompt Library and switch the language selector in the header (top-right). Your choice is saved per browser and applied immediately to the library (node buttons pick it up after a page reload).
+  - Node slots (inputs/outputs/tooltips) follow the official ComfyUI locale (`Comfy > Locale`) via `locales/` (`en`/`ja`/`zh` nodeDefs translations, see Comfy-Org/ComfyUI#6558).
 
 ## Installation
 
