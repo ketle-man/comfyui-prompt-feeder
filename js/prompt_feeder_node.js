@@ -37,7 +37,8 @@ app.registerExtension({
 			const container = document.createElement("div");
 			container.style.cssText =
 				"display:flex;align-items:center;justify-content:center;gap:4px;" +
-				"padding:5px;margin-top:5px;box-sizing:border-box;width:100%;";
+				"padding:5px;margin-top:5px;box-sizing:border-box;width:100%;" +
+				"max-width:100%;overflow:hidden;";
 
 			// ---- ボタン生成 ----
 			const runBtn  = makeBtn(t("node.run"),      "#2a7a3a", t("node.run_title"));
@@ -69,13 +70,16 @@ app.registerExtension({
 		const COUNTER_H = 18;
 		const BUTTONS_H = 46;
 		const BOTTOM_PAD = 10;
+		const CONTENT_H = BUTTONS_H + COUNTER_H + PREVIEW_H + BOTTOM_PAD;
+		// ComfyUI の DOMWidget 既定マージン。確保領域は (指定高さ - margin*2) になる
+		const DOM_MARGIN = 10;
 		const previewPanel = document.createElement("div");
 		previewPanel.style.cssText =
-			`width:100%;padding:4px 5px ${BOTTOM_PAD}px;` +
+			`width:100%;max-width:100%;padding:4px 5px ${BOTTOM_PAD}px;` +
 			"box-sizing:border-box;display:none;overflow:hidden;";
 		const previewText = document.createElement("div");
 		previewText.style.cssText =
-			`width:100%;height:${PREVIEW_H}px;overflow-y:auto;border-radius:4px;` +
+			`width:100%;max-width:100%;height:${PREVIEW_H}px;overflow-y:auto;overflow-x:hidden;border-radius:4px;` +
 			"background:#0d0d0d;color:#ccc;font-size:11px;line-height:1.4;padding:6px 8px;" +
 			"box-sizing:border-box;white-space:pre-wrap;word-break:break-word;";
 			previewText.textContent = "";
@@ -126,12 +130,14 @@ app.registerExtension({
 				setCounterText(`${i + 1} / ${lines.length}`);
 				return;
 			}
-			// library: サーバに現在の設定での件数＋該当行を問合せ
+			// library / single_file: サーバに現在の設定での件数＋該当行を問合せ
 			const req = ++_previewReq;
 			try {
 				const params = new URLSearchParams({
 					root: String(getW("source_root")?.value ?? "prompt-feeder-data"),
 					dir: String(getW("directory")?.value ?? ""),
+					mode: String(mode),
+					file: String(getW("file")?.value ?? ""),
 					sort: String(getW("sort_mode")?.value ?? "ascending"),
 					index: String(idx),
 					start: String(getW("start_index")?.value ?? 0),
@@ -177,6 +183,7 @@ app.registerExtension({
 		hookWidget("text", 300);
 		hookWidget("source_root");
 		hookWidget("directory");
+		hookWidget("file");
 		hookWidget("index");
 		hookWidget("sort_mode");
 		hookWidget("start_index");
@@ -227,7 +234,7 @@ app.registerExtension({
 
 			// ---- 外側ラッパー（ボタン行 + プレビューパネル）----
 			const outerWrapper = document.createElement("div");
-			outerWrapper.style.cssText = "width:100%;";
+			outerWrapper.style.cssText = "width:100%;max-width:100%;box-sizing:border-box;overflow:hidden;";
 			outerWrapper.append(container, previewPanel);
 
 			// ---- DOM ウィジェット登録 ----
@@ -235,7 +242,14 @@ app.registerExtension({
 				"prompt_feeder_controls",
 				"prompt_feeder_controls",
 				outerWrapper,
-				{ getValue() { return ""; }, setValue() {} }
+				{
+					getValue() { return ""; },
+					setValue() {},
+					// ComfyUI 1.16+ は computeSize ではなく computeLayoutSize（= これらの
+					// オプション）で高さを決めるため、両方を指定して領域不足を防ぐ
+					getMinHeight: () => CONTENT_H + DOM_MARGIN * 2,
+					getMaxHeight: () => CONTENT_H + DOM_MARGIN * 2,
+				}
 			);
 
 			// ウィジェットの隠蔽と初期化
@@ -259,21 +273,33 @@ app.registerExtension({
 				//（disabled ウィジェットは半透明描画＋値非表示＋操作不可になる。
 				//  バックエンドへの値送信には影響しない）
 				const EDIT_ONLY = ["text"];
-				const LIB_ONLY = ["source_root", "directory", "sort_mode", "start_index", "end_index", "seed"];
+				const PATH_SHARED = ["source_root", "directory", "sort_mode", "start_index", "end_index", "seed"];
+				const LIB_ONLY = ["use_selection"];
+				const SINGLE_ONLY = ["file"];
 				const modeW = node.widgets?.find(w => w.name === "mode");
 				const applyMode = (modeVal) => {
 					const isLib = modeVal === "library";
+					const isSingle = modeVal === "single_file";
+					const isPathMode = isLib || isSingle;
 					selBtn.disabled = !isLib;
 					selBtn.style.opacity = isLib ? "1" : "0.4";
-					libBtn.disabled = !isLib;
-					libBtn.style.opacity = isLib ? "1" : "0.4";
+					libBtn.disabled = !isPathMode;
+					libBtn.style.opacity = isPathMode ? "1" : "0.4";
 					for (const name of EDIT_ONLY) {
 						const w = node.widgets?.find(w => w.name === name);
-						if (w) w.disabled = isLib;
+						if (w) w.disabled = isPathMode;
+					}
+					for (const name of PATH_SHARED) {
+						const w = node.widgets?.find(w => w.name === name);
+						if (w) w.disabled = !isPathMode;
 					}
 					for (const name of LIB_ONLY) {
 						const w = node.widgets?.find(w => w.name === name);
 						if (w) w.disabled = !isLib;
+					}
+					for (const name of SINGLE_ONLY) {
+						const w = node.widgets?.find(w => w.name === name);
+						if (w) w.disabled = !isSingle;
 					}
 					node.setDirtyCanvas(true, true);
 				};
@@ -294,8 +320,9 @@ app.registerExtension({
 				node.setDirtyCanvas(true, true);
 			}, 20);
 
+		// 旧フロントエンド（computeLayoutSize 非対応）向けのフォールバック
 		domWidget.computeSize = function(width) {
-			return [width, BUTTONS_H + COUNTER_H + PREVIEW_H + BOTTOM_PAD];
+			return [width, CONTENT_H];
 		};
 
 			node.onRemoved = function () {
@@ -388,9 +415,10 @@ function makeBtn(label, bg, title = "") {
 	btn.textContent = label;
 	if (title) btn.title = title;
 	btn.style.cssText =
-		`padding:6px 4px;flex:1;background:${bg};color:#fff;border:none;` +
+		`padding:6px 4px;flex:1 1 0;min-width:0;box-sizing:border-box;background:${bg};color:#fff;border:none;` +
 		"border-radius:4px;cursor:pointer;font-size:10px;font-weight:bold;" +
-		"transition:all 0.15s;white-space:nowrap;box-shadow: 0 1px 2px rgba(0,0,0,0.3);";
+		"transition:all 0.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" +
+		"box-shadow: 0 1px 2px rgba(0,0,0,0.3);";
 	btn.addEventListener("mouseover", () => { if (!btn.disabled) btn.style.opacity = "0.8"; });
 	btn.addEventListener("mouseout",  () => { if (!btn.disabled) btn.style.opacity = "1"; });
 	return btn;

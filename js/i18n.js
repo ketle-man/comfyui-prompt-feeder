@@ -65,6 +65,7 @@ const LOCALES = {
         "lib.confirm_delete":    (name) => `Delete "${name}"?`,
         "lib.status_deleted":    (name) => `🗑 Preset "${name}" deleted`,
         "lib.alert_delete_error":    "Failed to delete",
+        "lib.alert_select_one_file": "Please select exactly one file for single_file mode",
         // prompt_feeder_node.js
         "node.run":       "▶ Run",
         "node.stop":      "⏹ Stop",
@@ -143,6 +144,7 @@ const LOCALES = {
         "lib.confirm_delete":    (name) => `「${name}」を削除しますか？`,
         "lib.status_deleted":    (name) => `🗑 プリセット「${name}」を削除しました`,
         "lib.alert_delete_error":    "削除に失敗しました",
+        "lib.alert_select_one_file": "single_fileモードではファイルを1つだけ選択してください",
         "node.run":       "▶ Run",
         "node.stop":      "⏹ Stop",
         "node.lib":       "📂 Lib",
@@ -219,6 +221,7 @@ const LOCALES = {
         "lib.confirm_delete":    (name) => `是否删除「${name}」？`,
         "lib.status_deleted":    (name) => `🗑 已删除预设「${name}」`,
         "lib.alert_delete_error":    "删除失败",
+        "lib.alert_select_one_file": "single_file 模式下请只选择一个文件",
         "node.run":       "▶ 运行",
         "node.stop":      "⏹ 停止",
         "node.lib":       "📂 库",

@@ -2,7 +2,7 @@ English | [日本語](README.ja.md) | [中文](README.zh.md)
 
 # ComfyUI Prompt Feeder
 
-A ComfyUI custom node that feeds text prompts from a folder one at a time. Supports two input methods: typing directly on the node, or selecting `.txt` files from a built-in library.
+A ComfyUI custom node that feeds text prompts from a folder one at a time. Supports three input methods: typing directly on the node, selecting `.txt` files from a built-in library, or looping over a line range within a single `.txt` file.
 
 ## Screenshots
 
@@ -31,15 +31,16 @@ A ComfyUI custom node that feeds text prompts from a folder one at a time. Suppo
 
 ## Features
 
-- **Two input modes**:
+- **Three input modes**:
   - `edit`: type directly into the text area on the node. One prompt per line (empty lines are skipped).
   - `library`: reads the selected `.txt` files from the library, splits them into lines, and loops through them exactly like edit mode.
+  - `single_file`: picks one `.txt` file from the library and loops through a line range (`start_index`/`end_index`) within just that file.
 
 - **Playback Controls**:
   - ▶ **Run**: resets the index and starts the auto-loop.
   - ⏹ **Stop**: stops the auto-loop.
   - 🔗 **Sel ON/OFF**: toggles between using only the files selected in the library, or every file in the folder (library mode only).
-  - 📂 **Lib**: opens the Prompt Library (library mode only).
+  - 📂 **Lib**: opens the Prompt Library (library and single_file mode).
 
 - **Prompt Library (3-pane picker)**:
   - Left: data source switcher + folder tree / Middle: `.txt` file list (with a first-line preview) / Right: content preview + editor.
@@ -98,44 +99,49 @@ ComfyUI/
 
 | Parameter | Description |
 | --- | --- |
-| `mode` | `edit` (type directly) / `library` (pick files) |
+| `mode` | `edit` (type directly) / `library` (pick files) / `single_file` (pick one file, range over its lines) |
 | `text` | Direct-entry field (multi-line). Only used in edit mode |
-| `source_root` | Data source: `prompt-feeder-data` (read/write) / an external path registered via ⚙ (read-only). Only used in library mode |
-| `directory` | Subfolder under `source_root`. Leave empty to use its root. Only used in library mode |
-| `sort_mode` | `ascending` (natural sort) / `descending` / `random`. Only used in library mode |
+| `source_root` | Data source: `prompt-feeder-data` (read/write) / an external path registered via ⚙ (read-only). Used in library and single_file mode |
+| `directory` | Subfolder under `source_root`. Leave empty to use its root. Used in library and single_file mode |
+| `sort_mode` | `ascending` (natural sort/file order) / `descending` / `random`. Used in library and single_file mode |
 | `index` | The current output position. Updated automatically by Run |
-| `start_index` | Start of the read range (per file). Only used in library mode |
-| `end_index` | End of the read range (0 = to the end, per file). Only used in library mode |
+| `start_index` | Start of the read range (per file in library mode, per line in single_file mode) |
+| `end_index` | End of the read range (0 = to the end; per file in library mode, per line in single_file mode) |
 | `seed` | Used to reproduce random sorting. Only relevant when `sort_mode=random` |
 | `use_selection` | Whether to use the library's file selection (toggled by the Sel button). Only used in library mode |
+| `file` | Filename within `directory` (e.g. `hero.txt`). Only used in single_file mode; pick it via the Library's file checkbox + **Apply to Node** |
 
 Output: one `STRING` (connect it to `CLIP Text Encode`, etc.).
 
+> **Note**: `file` is intentionally placed **last** on the node (below `control after generate`). Despite its position, it conceptually belongs with `directory` — it picks a file inside that folder.
+
 ## Widget availability by mode
 
-| Item | Edit mode | Library mode |
-| --- | --- | --- |
-| `mode` | ✅ the switch itself | ✅ |
-| `text` | ✅ prompt source | ❌ ignored (still shown) |
-| `source_root` | ❌ ignored | ✅ |
-| `directory` | ❌ ignored | ✅ |
-| `sort_mode` | ❌ ignored (input line order is fixed) | ✅ |
-| `index` | ✅ | ✅ |
-| `start_index` / `end_index` | ❌ ignored | ⚠️ active, but the range is **per file**, not per line |
-| `seed` | ❌ ignored | ⚠️ only relevant when `sort_mode=random` |
-| `use_selection` / `Sel` button | ❌ meaningless (button is disabled) | ✅ |
-| `selected_files` | ❌ ignored | ✅ |
-| `Lib` button | ❌ disabled | ✅ |
-| `control after generate` | ❌ meaningless, since `seed` itself is meaningless | ⚠️ only meaningful with random |
-| Preview + counter | ✅ | ✅ |
+| Item | Edit mode | Library mode | single_file mode |
+| --- | --- | --- | --- |
+| `mode` | ✅ the switch itself | ✅ | ✅ |
+| `text` | ✅ prompt source | ❌ ignored (still shown) | ❌ ignored (still shown) |
+| `source_root` | ❌ ignored | ✅ | ✅ |
+| `directory` | ❌ ignored | ✅ | ✅ (folder containing `file`) |
+| `sort_mode` | ❌ ignored (input line order is fixed) | ✅ (sorts files) | ✅ (sorts the file's lines) |
+| `index` | ✅ | ✅ | ✅ |
+| `start_index` / `end_index` | ❌ ignored | ⚠️ active, but the range is **per file**, not per line | ⚠️ active, range is **per line** within `file` |
+| `seed` | ❌ ignored | ⚠️ only relevant when `sort_mode=random` | ⚠️ only relevant when `sort_mode=random` |
+| `use_selection` / `Sel` button | ❌ meaningless (button is disabled) | ✅ | ❌ meaningless (button is disabled) |
+| `selected_files` | ❌ ignored | ✅ | ❌ ignored |
+| `Lib` button | ❌ disabled | ✅ (pick folder + files) | ✅ (pick folder + one file) |
+| `control after generate` | ❌ meaningless, since `seed` itself is meaningless | ⚠️ only meaningful with random | ⚠️ only meaningful with random |
+| `file` (shown last on the node) | ❌ ignored | ❌ ignored | ✅ the target file |
+| Preview + counter | ✅ | ✅ | ✅ |
 
 Widgets that don't apply are dimmed (semi-transparent, value hidden, and disabled). Their values are preserved, so switching modes back keeps your settings intact.
 
 ## Notes
 
-- **Note**: `start_index` / `end_index` define a range **per file**, not per line. Example: with 2 files of 3 lines each, `start_index=1` means "from the 2nd file onward" — i.e., from the overall 4th line. Check the preview panel's counter (`x / N`) for the total count.
+- **Note**: in `library` mode, `start_index` / `end_index` define a range **per file**, not per line. Example: with 2 files of 3 lines each, `start_index=1` means "from the 2nd file onward" — i.e., from the overall 4th line. Check the preview panel's counter (`x / N`) for the total count.
+- In `single_file` mode, `start_index` / `end_index` instead define a range **per line** within the single selected `file`.
 - Numbers in file names (e.g. `a1.txt`, `a10.txt`) are sorted correctly in natural order.
-- After selecting in the library, pressing **Apply to Node** applies the folder and selection to the node and automatically switches `mode` to `library`.
+- After selecting in the library, pressing **Apply to Node** applies the folder and selection to the node: it switches `mode` to `library` when multiple files (or none) are checked, or fills the `file` field and keeps `mode` as `single_file` when exactly one file is checked and the node was already in `single_file` mode.
 - Multiple Prompt Feeder nodes can run independently in the same workflow.
 - If a queue error occurs mid-loop, the Run button is automatically re-enabled.
 - Supported format: `.txt` only.

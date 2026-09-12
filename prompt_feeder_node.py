@@ -186,6 +186,51 @@ def _collect_library_prompts(root, directory, sort_mode, start_index, end_index,
     return prompts
 
 
+def _collect_single_file_prompts(root, directory, filename, sort_mode, start_index, end_index,
+                                seed) -> list:
+    """
+    single_fileモード用のプロンプト一覧を構築する。
+    指定した1ファイルの内容を行分割し（1行=1プロンプト）、sort_mode適用後に
+    start_index〜end_indexの行範囲だけを返す。
+    """
+    if not filename:
+        raise ValueError("file is required in single_file mode")
+    if not filename.lower().endswith(".txt"):
+        raise ValueError("Only .txt files are supported")
+
+    rel_path = f"{directory}/{filename}" if directory else filename
+    full = resolve_safe_file(root, rel_path)
+    _debug(f"single_file target={full}")
+
+    if not os.path.isfile(full) or os.path.islink(full):
+        raise FileNotFoundError(f"File not found: {filename}")
+    if os.path.getsize(full) > MAX_TEXT_BYTES:
+        raise ValueError(f"File too large (max 100KB): {filename}")
+
+    with open(full, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    lines = [line.strip() for line in content.splitlines() if line.strip()]
+    if not lines:
+        raise ValueError("No readable prompt content found in the specified file")
+
+    if sort_mode == "descending":
+        lines.reverse()
+    elif sort_mode == "random":
+        random.Random(seed).shuffle(lines)
+
+    # 範囲指定の適用（行単位）
+    if end_index == 0 or end_index >= len(lines):
+        lines = lines[start_index:]
+    else:
+        lines = lines[start_index:end_index + 1]
+
+    if not lines:
+        raise ValueError("No prompts left after applying index range")
+
+    return lines
+
+
 # ----------------------------------------------------------------
 # プリセット保存ヘルパー
 # ----------------------------------------------------------------
@@ -460,6 +505,8 @@ def _setup_routes():
 
             root = normalize_root(q.get("root"))
             directory = q.get("dir", "")
+            mode = q.get("mode", "library")
+            filename = q.get("file", "")
             sort_mode = q.get("sort", "ascending")
             if sort_mode not in ("ascending", "descending", "random"):
                 sort_mode = "ascending"
@@ -470,9 +517,13 @@ def _setup_routes():
             use_selection = str(q.get("use_selection", "true")).lower() in ("1", "true", "yes")
             selected_files = q.get("selected_files", "[]")
             try:
-                prompts = _collect_library_prompts(
-                    root, directory, sort_mode, start_index, end_index,
-                    seed, use_selection, selected_files)
+                if mode == "single_file":
+                    prompts = _collect_single_file_prompts(
+                        root, directory, filename, sort_mode, start_index, end_index, seed)
+                else:
+                    prompts = _collect_library_prompts(
+                        root, directory, sort_mode, start_index, end_index,
+                        seed, use_selection, selected_files)
             except (FileNotFoundError, ValueError) as e:
                 return web.json_response({"total": 0, "index": 0, "prompt": "", "error": str(e)})
             except Exception:
@@ -587,7 +638,7 @@ class PromptFeeder:
         root_choices = [ROOT_PFDATA] + sorted(_load_external_paths().keys())
         return {
             "required": {
-                "mode": (["edit", "library"],),
+                "mode": (["edit", "library", "single_file"],),
                 "text": ("STRING", {
                     "multiline": True,
                     "default": "",
@@ -609,6 +660,13 @@ class PromptFeeder:
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "use_selection": ("BOOLEAN", {"default": True}),
                 "selected_files": ("STRING", {"default": "[]"}),
+                # 既存ワークフローの widgets_values（配列・位置ベース）とのズレを避けるため、
+                # 新規ウィジェットは必ず末尾に追加する
+                "file": ("STRING", {
+                    "default": "",
+                    "tooltip": "Filename (e.g. hero.txt) within the directory above. Used in single_file mode; "
+                               "start_index/end_index then select a line range within this file."
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -622,7 +680,7 @@ class PromptFeeder:
     OUTPUT_NODE = True
 
     def load_prompt(self, mode, text, source_root, directory, sort_mode, index, start_index,
-                    end_index, seed, use_selection=True, unique_id=None, selected_files="[]"):
+                    end_index, seed, use_selection=True, unique_id=None, selected_files="[]", file=""):
         from server import PromptServer
 
         prompts = []
@@ -633,6 +691,10 @@ class PromptFeeder:
             prompts = [line.strip() for line in lines if line.strip()]
             if not prompts:
                 raise ValueError("No prompts found: enter at least one non-empty line in edit mode")
+        elif mode == "single_file":
+            root = normalize_root(source_root)
+            prompts = _collect_single_file_prompts(
+                root, directory, file, sort_mode, start_index, end_index, seed)
         else:
             # パスの解決と検証
             root = normalize_root(source_root)

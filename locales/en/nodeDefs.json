@@ -5,10 +5,11 @@
     "inputs": {
       "mode": {
         "name": "mode",
-        "tooltip": "edit (type directly) / library (pick files)",
+        "tooltip": "edit (type directly) / library (pick files) / single_file (pick one file, use start_index/end_index for a line range)",
         "options": {
           "edit": "edit",
-          "library": "library"
+          "library": "library",
+          "single_file": "single_file"
         }
       },
       "text": {
@@ -22,6 +23,10 @@
       "directory": {
         "name": "directory",
         "tooltip": "Subfolder name within the selected source_root. Leave empty to use its root directory."
+      },
+      "file": {
+        "name": "file",
+        "tooltip": "Filename (e.g. hero.txt) within the directory above. Used in single_file mode; start_index/end_index then select a line range within this file."
       },
       "sort_mode": {
         "name": "sort_mode",

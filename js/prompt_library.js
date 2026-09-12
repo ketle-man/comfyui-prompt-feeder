@@ -220,6 +220,10 @@ function buildModal(node) {
         return currentRoot === ROOT_PFDATA;
     }
 
+    function isSingleFileMode() {
+        return node.widgets?.find(w => w.name === "mode")?.value === "single_file";
+    }
+
     function updateWriteUI() {
         const writable = isWritableRoot();
         newFileBtn.disabled = !writable;
@@ -578,9 +582,17 @@ function buildModal(node) {
         cb.style.cssText = "width:16px;height:16px;accent-color:#4a90d9;cursor:pointer;flex-shrink:0;";
         cb.addEventListener("change", e => {
             e.stopPropagation();
-            if (cb.checked) checkedFiles.add(fname);
-            else            checkedFiles.delete(fname);
-            row.style.borderColor = cb.checked ? "#4a90d9" : "transparent";
+            if (cb.checked) {
+                if (isSingleFileMode()) checkedFiles.clear();
+                checkedFiles.add(fname);
+            } else {
+                checkedFiles.delete(fname);
+            }
+            if (isSingleFileMode()) {
+                renderList();
+            } else {
+                row.style.borderColor = cb.checked ? "#4a90d9" : "transparent";
+            }
             updateStatus();
         });
 
@@ -793,6 +805,7 @@ function buildModal(node) {
     // 全選択 / 全解除
     // ----------------------------------------------------------------
     selAllBtn.addEventListener("click", () => {
+        if (isSingleFileMode()) return; // single_file モードでは1件のみ選択可能
         for (const f of currentFiles) checkedFiles.add(f);
         renderList();
         updateStatus();
@@ -807,6 +820,14 @@ function buildModal(node) {
     // ノードに適用
     // ----------------------------------------------------------------
     applyBtn.addEventListener("click", () => {
+        const singleMode = isSingleFileMode();
+        const inCurrent = [...checkedFiles].filter(f => currentFiles.includes(f));
+
+        if (singleMode && inCurrent.length !== 1) {
+            alert(t("lib.alert_select_one_file"));
+            return;
+        }
+
         const rootWidget = node.widgets?.find(w => w.name === "source_root");
         if (rootWidget) {
             rootWidget.value = currentRoot;
@@ -819,18 +840,27 @@ function buildModal(node) {
             if (dirWidget.callback) dirWidget.callback.call(dirWidget, dirWidget.value);
         }
 
-        const selWidget = node.widgets?.find(w => w.name === "selected_files");
-        if (selWidget) {
-            const inCurrent = [...checkedFiles].filter(f => currentFiles.includes(f));
-            selWidget.value = JSON.stringify(inCurrent);
-            if (selWidget.callback) selWidget.callback.call(selWidget, selWidget.value);
-        }
+        if (singleMode) {
+            // single_file モード: 選択した1ファイルを file ウィジェットへ反映
+            // （mode 自体はここでは変更しない。selected_files/use_selection は対象外）
+            const fileWidget = node.widgets?.find(w => w.name === "file");
+            if (fileWidget) {
+                fileWidget.value = inCurrent[0];
+                if (fileWidget.callback) fileWidget.callback.call(fileWidget, fileWidget.value);
+            }
+        } else {
+            const selWidget = node.widgets?.find(w => w.name === "selected_files");
+            if (selWidget) {
+                selWidget.value = JSON.stringify(inCurrent);
+                if (selWidget.callback) selWidget.callback.call(selWidget, selWidget.value);
+            }
 
-        // library モードに切り替え
-        const modeWidget = node.widgets?.find(w => w.name === "mode");
-        if (modeWidget) {
-            modeWidget.value = "library";
-            if (modeWidget.callback) modeWidget.callback.call(modeWidget, modeWidget.value);
+            // library モードに切り替え
+            const modeWidget = node.widgets?.find(w => w.name === "mode");
+            if (modeWidget) {
+                modeWidget.value = "library";
+                if (modeWidget.callback) modeWidget.callback.call(modeWidget, modeWidget.value);
+            }
         }
 
         // インデックスをリセット
@@ -862,12 +892,17 @@ function buildModal(node) {
         const dirWidget = node.widgets?.find(w => w.name === "directory");
         if (dirWidget?.value) currentDir = dirWidget.value;
 
-        const selWidget = node.widgets?.find(w => w.name === "selected_files");
-        if (selWidget?.value) {
-            try {
-                const arr = JSON.parse(selWidget.value);
-                for (const f of arr) checkedFiles.add(f);
-            } catch (_) {}
+        if (isSingleFileMode()) {
+            const fileWidget = node.widgets?.find(w => w.name === "file");
+            if (fileWidget?.value) checkedFiles.add(fileWidget.value);
+        } else {
+            const selWidget = node.widgets?.find(w => w.name === "selected_files");
+            if (selWidget?.value) {
+                try {
+                    const arr = JSON.parse(selWidget.value);
+                    for (const f of arr) checkedFiles.add(f);
+                } catch (_) {}
+            }
         }
     }
 

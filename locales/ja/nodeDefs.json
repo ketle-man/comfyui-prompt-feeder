@@ -5,10 +5,11 @@
     "inputs": {
       "mode": {
         "name": "モード",
-        "tooltip": "edit（直接記入）/ library（ファイル選択）",
+        "tooltip": "edit（直接記入）/ library（ファイル選択）/ single_file（1ファイルを選択し、start_index/end_indexで行範囲を指定）",
         "options": {
           "edit": "edit",
-          "library": "library"
+          "library": "library",
+          "single_file": "single_file"
         }
       },
       "text": {
@@ -22,6 +23,10 @@
       "directory": {
         "name": "フォルダ",
         "tooltip": "source_root配下のサブフォルダ名。空欄でルート直下を使用します。"
+      },
+      "file": {
+        "name": "ファイル",
+        "tooltip": "上記フォルダ内のファイル名（例: hero.txt）。single_fileモードで使用し、start_index/end_indexでこのファイル内の行範囲を選択します。"
       },
       "sort_mode": {
         "name": "ソート",

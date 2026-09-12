@@ -5,10 +5,11 @@
     "inputs": {
       "mode": {
         "name": "模式",
-        "tooltip": "edit（直接输入）/ library（选择文件）",
+        "tooltip": "edit（直接输入）/ library（选择文件）/ single_file（选择单个文件，用start_index/end_index指定行范围）",
         "options": {
           "edit": "edit",
-          "library": "library"
+          "library": "library",
+          "single_file": "single_file"
         }
       },
       "text": {
@@ -22,6 +23,10 @@
       "directory": {
         "name": "文件夹",
         "tooltip": "所选 source_root 下的子文件夹名。留空则使用其根目录。"
+      },
+      "file": {
+        "name": "文件",
+        "tooltip": "上述文件夹内的文件名（如 hero.txt）。用于 single_file 模式，start_index/end_index 将在此文件内选择行范围。"
       },
       "sort_mode": {
         "name": "排序",

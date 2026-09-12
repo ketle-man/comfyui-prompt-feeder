@@ -6,3 +6,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Internal dev notes (not for the published package)
+DEVLOG.md
