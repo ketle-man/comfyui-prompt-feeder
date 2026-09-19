@@ -56,7 +56,7 @@
       },
       "enable_wildcards": {
         "name": "ワイルドカード展開",
-        "tooltip": "出力プロンプト中の __name__ を name.txt 内のランダムな1行に置換します（source_root配下を検索、__dir/name__ でサブフォルダ指定も可）。"
+        "tooltip": "出力プロンプト中の __name__ を name.txt 内のランダムな1行に置換します（source_root → prompt-feeder-data → 登録済みの他のデータソースの順に検索、__dir/name__ でサブフォルダ指定も可）。"
       }
     },
     "outputs": {

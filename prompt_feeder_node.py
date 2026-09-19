@@ -242,9 +242,28 @@ def _collect_single_file_prompts(root, directory, filename, sort_mode, start_ind
 # ----------------------------------------------------------------
 # __name__ 形式のワイルドカード展開
 # ----------------------------------------------------------------
+def _wildcard_search_roots(root):
+    """ワイルドカード検索順: 選択中のroot → prompt-feeder-data → 登録済み外部パス（ラベル順）"""
+    roots = [root, ROOT_PFDATA] + sorted(_load_external_paths().keys())
+    seen = set()
+    return [r for r in roots if not (r in seen or seen.add(r))]
+
+
 def _resolve_wildcard_file(root, name):
     """
     __name__ に対応する .txt ファイルの絶対パスを返す（見つからなければNone）。
+    選択中のrootで見つからなければ他のデータソースも順に検索する。
+    """
+    for candidate_root in _wildcard_search_roots(root):
+        full = _resolve_wildcard_file_in_root(candidate_root, name)
+        if full is not None:
+            return full
+    return None
+
+
+def _resolve_wildcard_file_in_root(root, name):
+    """
+    単一rootの中で __name__ に対応する .txt ファイルの絶対パスを返す。
     name はサブフォルダを含んでよい（例: "quality/hero" -> "quality/hero.txt"）。
     ファイル名の大文字小文字が一致しない場合も緩く照合する。
     """
@@ -748,7 +767,8 @@ class PromptFeeder:
                 "enable_wildcards": ("BOOLEAN", {
                     "default": True,
                     "tooltip": "Replace __name__ tokens in the resulting prompt with a random line from "
-                               "name.txt (searched under source_root, subfolders allowed: __dir/name__)."
+                               "name.txt (searched in source_root first, then prompt-feeder-data and the other "
+                               "registered data sources; subfolders allowed: __dir/name__)."
                 }),
             },
             "hidden": {

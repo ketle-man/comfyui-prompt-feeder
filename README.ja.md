@@ -67,7 +67,7 @@
   - Range control via `start_index` / `end_index`（※ファイル単位、後述）。
 
 - **ワイルドカード**（`__name__` 形式、A1111/Impact-Pack互換）:
-  - 出力プロンプト中（`edit`・`library`・`single_file` いずれのモードでも）の `__name__` トークンを、現在の `source_root` 配下にある `name.txt` 内のランダムな1行に置換します。
+  - 出力プロンプト中（`edit`・`library`・`single_file` いずれのモードでも）の `__name__` トークンを、`name.txt` 内のランダムな1行に置換します。ファイルは現在の `source_root` → `prompt-feeder-data` → 登録済みの他の外部パスの順に検索されるため、どの `source_root` を選んでいても全データソースのワイルドカードを利用できます。
   - サブフォルダ指定に対応: `__character/hair__` は `character/hair.txt` に対応します。
   - ネストしたワイルドカード（ワイルドカードファイルの1行に別の `__name__` が含まれる場合）も再帰的に展開されます。
   - 対応する `.txt` が見つからない場合、`__name__` はそのまま残ります。

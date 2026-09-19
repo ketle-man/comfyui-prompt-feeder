@@ -67,7 +67,7 @@ A ComfyUI custom node that feeds text prompts from a folder one at a time. Suppo
   - Range control via `start_index` / `end_index` (per-file, see below).
 
 - **Wildcards** (`__name__` syntax, A1111/Impact-Pack compatible):
-  - Any `__name__` token in the resulting prompt (in `edit`, `library`, or `single_file` mode) is replaced with a random line from `name.txt`, looked up under the current `source_root`.
+  - Any `__name__` token in the resulting prompt (in `edit`, `library`, or `single_file` mode) is replaced with a random line from `name.txt`. The file is looked up in the current `source_root` first, then in `prompt-feeder-data`, then in the other registered external paths — so wildcards from all your data sources are usable regardless of which `source_root` is selected.
   - Subfolders are supported: `__character/hair__` maps to `character/hair.txt`.
   - Nested wildcards (a wildcard file's line containing another `__name__` token) are expanded recursively.
   - If no matching file is found, the `__name__` token is left as-is.

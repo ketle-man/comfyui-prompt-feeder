@@ -67,7 +67,7 @@
   - 通过 `start_index` / `end_index` 控制范围（按文件为单位，详见下文）。
 
 - **通配符**（`__name__` 格式，兼容 A1111/Impact-Pack）：
-  - 结果提示词中（无论 `edit`、`library` 还是 `single_file` 模式）的 `__name__` 会被替换为当前 `source_root` 下 `name.txt` 中的随机一行。
+  - 结果提示词中（无论 `edit`、`library` 还是 `single_file` 模式）的 `__name__` 会被替换为 `name.txt` 中的随机一行。文件按 当前 `source_root` → `prompt-feeder-data` → 其他已注册的外部路径 的顺序查找，因此无论选择哪个 `source_root`，都能使用所有数据源中的通配符。
   - 支持子文件夹：`__character/hair__` 对应 `character/hair.txt`。
   - 支持嵌套通配符（某个通配符文件的一行中包含另一个 `__name__`）的递归展开。
   - 若找不到对应的文件，`__name__` 会原样保留。
