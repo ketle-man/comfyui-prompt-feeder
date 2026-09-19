@@ -117,20 +117,7 @@ app.registerExtension({
 			if (_nodeStates.get(id)?.running) return; // 実行中はsync更新を優先
 			const mode = getW("mode")?.value ?? "edit";
 			const idx = Math.max(0, Number(getW("index")?.value ?? 0));
-			if (mode === "edit") {
-				const lines = String(getW("text")?.value ?? "")
-					.split("\n").map(s => s.trim()).filter(Boolean);
-				if (!lines.length) {
-					setPreviewText("");
-					setCounterText("");
-					return;
-				}
-				const i = Math.min(idx, lines.length - 1);
-				setPreviewText(lines[i]);
-				setCounterText(`${i + 1} / ${lines.length}`);
-				return;
-			}
-			// library / single_file: サーバに現在の設定での件数＋該当行を問合せ
+			// edit モードもワイルドカード展開を反映するためサーバに問合せる
 			const req = ++_previewReq;
 			try {
 				const params = new URLSearchParams({
@@ -138,6 +125,7 @@ app.registerExtension({
 					dir: String(getW("directory")?.value ?? ""),
 					mode: String(mode),
 					file: String(getW("file")?.value ?? ""),
+					text: String(getW("text")?.value ?? ""),
 					sort: String(getW("sort_mode")?.value ?? "ascending"),
 					index: String(idx),
 					start: String(getW("start_index")?.value ?? 0),
@@ -145,6 +133,7 @@ app.registerExtension({
 					seed: String(getW("seed")?.value ?? 0),
 					use_selection: String(getW("use_selection")?.value ?? true),
 					selected_files: String(getW("selected_files")?.value ?? "[]"),
+					enable_wildcards: String(getW("enable_wildcards")?.value ?? true),
 				});
 				const res = await fetch("/prompt_feeder/preview?" + params.toString());
 				const data = await res.json();
@@ -191,6 +180,7 @@ app.registerExtension({
 		hookWidget("seed");
 		hookWidget("use_selection");
 		hookWidget("selected_files");
+		hookWidget("enable_wildcards");
 		updateIdlePreview();
 
 			// 初期登録
@@ -283,8 +273,9 @@ app.registerExtension({
 					const isPathMode = isLib || isSingle;
 					selBtn.disabled = !isLib;
 					selBtn.style.opacity = isLib ? "1" : "0.4";
-					libBtn.disabled = !isPathMode;
-					libBtn.style.opacity = isPathMode ? "1" : "0.4";
+					// editモードでもワイルドカード用ファイルを参照できるよう、Libボタンは常時有効にする
+					libBtn.disabled = false;
+					libBtn.style.opacity = "1";
 					for (const name of EDIT_ONLY) {
 						const w = node.widgets?.find(w => w.name === name);
 						if (w) w.disabled = isPathMode;

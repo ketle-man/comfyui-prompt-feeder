@@ -53,6 +53,10 @@
       },
       "selected_files": {
         "name": "selected_files"
+      },
+      "enable_wildcards": {
+        "name": "enable_wildcards",
+        "tooltip": "Replace __name__ tokens in the resulting prompt with a random line from name.txt (searched under source_root, subfolders allowed: __dir/name__)."
       }
     },
     "outputs": {

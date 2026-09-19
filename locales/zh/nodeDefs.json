@@ -53,6 +53,10 @@
       },
       "selected_files": {
         "name": "所选文件"
+      },
+      "enable_wildcards": {
+        "name": "通配符展开",
+        "tooltip": "将结果提示词中的 __name__ 替换为 name.txt 中的随机一行（在 source_root 下搜索，支持 __dir/name__ 形式的子文件夹）。"
       }
     },
     "outputs": {

@@ -53,6 +53,10 @@
       },
       "selected_files": {
         "name": "選択ファイル"
+      },
+      "enable_wildcards": {
+        "name": "ワイルドカード展開",
+        "tooltip": "出力プロンプト中の __name__ を name.txt 内のランダムな1行に置換します（source_root配下を検索、__dir/name__ でサブフォルダ指定も可）。"
       }
     },
     "outputs": {

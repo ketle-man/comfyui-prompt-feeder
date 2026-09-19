@@ -66,6 +66,13 @@
   - 排序方式：`ascending`（自然顺序）／`descending`／`random`（可通过 `seed` 复现）。
   - 通过 `start_index` / `end_index` 控制范围（按文件为单位，详见下文）。
 
+- **通配符**（`__name__` 格式，兼容 A1111/Impact-Pack）：
+  - 结果提示词中（无论 `edit`、`library` 还是 `single_file` 模式）的 `__name__` 会被替换为当前 `source_root` 下 `name.txt` 中的随机一行。
+  - 支持子文件夹：`__character/hair__` 对应 `character/hair.txt`。
+  - 支持嵌套通配符（某个通配符文件的一行中包含另一个 `__name__`）的递归展开。
+  - 若找不到对应的文件，`__name__` 会原样保留。
+  - 可通过 `seed`（结合 `index`）复现；可用 `enable_wildcards`（默认开启）关闭该功能。
+
 - **语言**：
   - 节点与提示词库 UI **默认显示英文**（不会跟随浏览器语言自动切换）。
   - 如需使用 日本語 / 中文（简体），请打开 Prompt Library，使用右上角的语言选择器切换。选择会保存在当前浏览器中，提示词库即时生效（节点上的按钮文本在页面重载后生效）。
@@ -110,6 +117,7 @@ ComfyUI/
 | `seed` | 用于复现随机排序，仅在 `sort_mode=random` 时有效 |
 | `use_selection` | 是否使用库中的文件选择（通过 Sel 按钮切换）。仅在 library 模式下有效 |
 | `file` | `directory` 下的文件名（例如 `hero.txt`）。仅在 single_file 模式下有效；在库中勾选文件后通过 **Apply to Node** 写入 |
+| `enable_wildcards` | 是否展开结果提示词中的 `__name__`（见上文通配符）。所有模式均适用 |
 
 输出：1 个 `STRING`（可连接到 `CLIP Text Encode` 等节点）。
 
@@ -129,9 +137,10 @@ ComfyUI/
 | `seed` | ❌ 被忽略 | ⚠️ 仅在 `sort_mode=random` 时有意义 | ⚠️ 仅在 `sort_mode=random` 时有意义 |
 | `use_selection` / `Sel` 按钮 | ❌ 无意义（按钮已禁用） | ✅ | ❌ 无意义（按钮已禁用） |
 | `selected_files` | ❌ 被忽略 | ✅ | ❌ 被忽略 |
-| `Lib` 按钮 | ❌ 已禁用 | ✅（选择文件夹＋多个文件） | ✅（选择文件夹＋单个文件） |
+| `Lib` 按钮 | ✅（用于查看通配符文件；点击 **Apply to Node** 会切换为 library 模式） | ✅（选择文件夹＋多个文件） | ✅（选择文件夹＋单个文件） |
 | `control after generate` | ❌ 因 `seed` 本身无意义而随之无意义 | ⚠️ 仅在 random 时有意义 | ⚠️ 仅在 random 时有意义 |
 | `file`（显示在节点最下方） | ❌ 被忽略 | ❌ 被忽略 | ✅ 目标文件本体 |
+| `enable_wildcards` | ✅ | ✅ | ✅ |
 | 预览＋计数器 | ✅ | ✅ | ✅ |
 
 不适用的控件会以半透明状态显示（值隐藏且不可操作）。其数值会被保留，因此切换回原模式后设置依然有效。

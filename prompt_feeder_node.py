@@ -10,6 +10,14 @@ DEBUG = False
 # テキストファイルの読み書きサイズ上限（100KB）
 MAX_TEXT_BYTES = 100 * 1024
 
+# __name__ 形式のワイルドカード（A1111/Impact-Pack互換）。
+# name はサブフォルダ区切り（__dir/name__）に加え、日本語などの非ASCII文字や
+# スペースを含むファイル名（実在のwildcardsパックに多い）も許可するため、
+# 改行以外の任意の文字を非貪欲マッチで受け付ける。安全性は文字クラスではなく
+# resolve_safe_file/resolve_safe_path のパストラバーサル検証で担保する。
+WILDCARD_PATTERN = re.compile(r"__([^\n]+?)__")
+MAX_WILDCARD_DEPTH = 10
+
 
 def _debug(*args):
     if DEBUG:
@@ -229,6 +237,69 @@ def _collect_single_file_prompts(root, directory, filename, sort_mode, start_ind
         raise ValueError("No prompts left after applying index range")
 
     return lines
+
+
+# ----------------------------------------------------------------
+# __name__ 形式のワイルドカード展開
+# ----------------------------------------------------------------
+def _resolve_wildcard_file(root, name):
+    """
+    __name__ に対応する .txt ファイルの絶対パスを返す（見つからなければNone）。
+    name はサブフォルダを含んでよい（例: "quality/hero" -> "quality/hero.txt"）。
+    ファイル名の大文字小文字が一致しない場合も緩く照合する。
+    """
+    try:
+        full = resolve_safe_file(root, name + ".txt")
+    except ValueError:
+        return None
+    if os.path.isfile(full) and not os.path.islink(full):
+        return full
+
+    directory, filename = os.path.split(name)
+    try:
+        target_dir = resolve_safe_path(root, directory)
+    except ValueError:
+        return None
+    if not os.path.isdir(target_dir):
+        return None
+    target_lower = (filename + ".txt").lower()
+    try:
+        for entry in os.listdir(target_dir):
+            full = os.path.join(target_dir, entry)
+            if entry.lower() == target_lower and os.path.isfile(full) and not os.path.islink(full):
+                return full
+    except OSError:
+        return None
+    return None
+
+
+def _expand_wildcards(text, root, rng, _depth=0) -> str:
+    """
+    テキスト中の __name__ をワイルドカードファイル（name.txt）内のランダムな1行に置換する。
+    対応ファイルが見つからない場合はそのまま残す。ネストしたワイルドカードも再帰的に展開する。
+    """
+    if _depth > MAX_WILDCARD_DEPTH:
+        return text
+
+    def _replace(match):
+        name = match.group(1)
+        full = _resolve_wildcard_file(root, name)
+        if full is None:
+            return match.group(0)
+        try:
+            if os.path.getsize(full) > MAX_TEXT_BYTES:
+                return match.group(0)
+            with open(full, "r", encoding="utf-8") as f:
+                content = f.read()
+        except OSError:
+            return match.group(0)
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+        if not lines:
+            return match.group(0)
+        chosen = rng.choice(lines)
+        return _expand_wildcards(chosen, root, rng, _depth + 1)
+
+    return WILDCARD_PATTERN.sub(_replace, text)
 
 
 # ----------------------------------------------------------------
@@ -507,6 +578,7 @@ def _setup_routes():
             directory = q.get("dir", "")
             mode = q.get("mode", "library")
             filename = q.get("file", "")
+            text = q.get("text", "")
             sort_mode = q.get("sort", "ascending")
             if sort_mode not in ("ascending", "descending", "random"):
                 sort_mode = "ascending"
@@ -516,8 +588,11 @@ def _setup_routes():
             seed = _to_int(q.get("seed", "0"))
             use_selection = str(q.get("use_selection", "true")).lower() in ("1", "true", "yes")
             selected_files = q.get("selected_files", "[]")
+            enable_wildcards = str(q.get("enable_wildcards", "true")).lower() in ("1", "true", "yes")
             try:
-                if mode == "single_file":
+                if mode == "edit":
+                    prompts = [line.strip() for line in (text or "").splitlines() if line.strip()]
+                elif mode == "single_file":
                     prompts = _collect_single_file_prompts(
                         root, directory, filename, sort_mode, start_index, end_index, seed)
                 else:
@@ -531,10 +606,13 @@ def _setup_routes():
             if not prompts:
                 return web.json_response({"total": 0, "index": 0, "prompt": ""})
             i = min(index, len(prompts) - 1)
+            prompt = prompts[i]
+            if enable_wildcards:
+                prompt = _expand_wildcards(prompt, root, random.Random(f"{seed}:{i}"))
             return web.json_response({
                 "total": len(prompts),
                 "index": i,
-                "prompt": prompts[i][:500],
+                "prompt": prompt[:500],
             })
 
         @routes.get("/prompt_feeder/presets")
@@ -667,6 +745,11 @@ class PromptFeeder:
                     "tooltip": "Filename (e.g. hero.txt) within the directory above. Used in single_file mode; "
                                "start_index/end_index then select a line range within this file."
                 }),
+                "enable_wildcards": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Replace __name__ tokens in the resulting prompt with a random line from "
+                               "name.txt (searched under source_root, subfolders allowed: __dir/name__)."
+                }),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -680,10 +763,12 @@ class PromptFeeder:
     OUTPUT_NODE = True
 
     def load_prompt(self, mode, text, source_root, directory, sort_mode, index, start_index,
-                    end_index, seed, use_selection=True, unique_id=None, selected_files="[]", file=""):
+                    end_index, seed, use_selection=True, unique_id=None, selected_files="[]", file="",
+                    enable_wildcards=True):
         from server import PromptServer
 
         prompts = []
+        root = normalize_root(source_root)
 
         if mode == "edit":
             # 改行区切り・空行スキップ
@@ -692,18 +777,19 @@ class PromptFeeder:
             if not prompts:
                 raise ValueError("No prompts found: enter at least one non-empty line in edit mode")
         elif mode == "single_file":
-            root = normalize_root(source_root)
             prompts = _collect_single_file_prompts(
                 root, directory, file, sort_mode, start_index, end_index, seed)
         else:
             # パスの解決と検証
-            root = normalize_root(source_root)
             prompts = _collect_library_prompts(
                 root, directory, sort_mode, start_index, end_index,
                 seed, use_selection, selected_files)
 
         total_in_range = len(prompts)
         current = prompts[min(index, total_in_range - 1)]
+
+        if enable_wildcards:
+            current = _expand_wildcards(current, root, random.Random(f"{seed}:{index}"))
 
         next_index = index + 1
         has_next = next_index < total_in_range

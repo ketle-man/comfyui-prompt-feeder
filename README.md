@@ -66,6 +66,13 @@ A ComfyUI custom node that feeds text prompts from a folder one at a time. Suppo
   - Sort modes: `ascending` (natural sort) / `descending` / `random` (reproducible via `seed`).
   - Range control via `start_index` / `end_index` (per-file, see below).
 
+- **Wildcards** (`__name__` syntax, A1111/Impact-Pack compatible):
+  - Any `__name__` token in the resulting prompt (in `edit`, `library`, or `single_file` mode) is replaced with a random line from `name.txt`, looked up under the current `source_root`.
+  - Subfolders are supported: `__character/hair__` maps to `character/hair.txt`.
+  - Nested wildcards (a wildcard file's line containing another `__name__` token) are expanded recursively.
+  - If no matching file is found, the `__name__` token is left as-is.
+  - Reproducible via `seed` (combined with `index`); toggle with `enable_wildcards` (default on).
+
 - **Language**:
   - The node and library UI is **English by default** (no browser-language auto-switching).
   - To use 日本語 / 中文（简体）, open the Prompt Library and switch the language selector in the header (top-right). Your choice is saved per browser and applied immediately to the library (node buttons pick it up after a page reload).
@@ -110,6 +117,7 @@ ComfyUI/
 | `seed` | Used to reproduce random sorting. Only relevant when `sort_mode=random` |
 | `use_selection` | Whether to use the library's file selection (toggled by the Sel button). Only used in library mode |
 | `file` | Filename within `directory` (e.g. `hero.txt`). Only used in single_file mode; pick it via the Library's file checkbox + **Apply to Node** |
+| `enable_wildcards` | Whether to expand `__name__` tokens in the resulting prompt (see Wildcards above). Applies to all modes |
 
 Output: one `STRING` (connect it to `CLIP Text Encode`, etc.).
 
@@ -129,9 +137,10 @@ Output: one `STRING` (connect it to `CLIP Text Encode`, etc.).
 | `seed` | ❌ ignored | ⚠️ only relevant when `sort_mode=random` | ⚠️ only relevant when `sort_mode=random` |
 | `use_selection` / `Sel` button | ❌ meaningless (button is disabled) | ✅ | ❌ meaningless (button is disabled) |
 | `selected_files` | ❌ ignored | ✅ | ❌ ignored |
-| `Lib` button | ❌ disabled | ✅ (pick folder + files) | ✅ (pick folder + one file) |
+| `Lib` button | ✅ (browse wildcard files; **Apply to Node** switches mode to `library`) | ✅ (pick folder + files) | ✅ (pick folder + one file) |
 | `control after generate` | ❌ meaningless, since `seed` itself is meaningless | ⚠️ only meaningful with random | ⚠️ only meaningful with random |
 | `file` (shown last on the node) | ❌ ignored | ❌ ignored | ✅ the target file |
+| `enable_wildcards` | ✅ | ✅ | ✅ |
 | Preview + counter | ✅ | ✅ | ✅ |
 
 Widgets that don't apply are dimmed (semi-transparent, value hidden, and disabled). Their values are preserved, so switching modes back keeps your settings intact.

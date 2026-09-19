@@ -66,6 +66,13 @@
   - Sort modes: `ascending`（自然順） / `descending` / `random`（`seed` で再現可能）。
   - Range control via `start_index` / `end_index`（※ファイル単位、後述）。
 
+- **ワイルドカード**（`__name__` 形式、A1111/Impact-Pack互換）:
+  - 出力プロンプト中（`edit`・`library`・`single_file` いずれのモードでも）の `__name__` トークンを、現在の `source_root` 配下にある `name.txt` 内のランダムな1行に置換します。
+  - サブフォルダ指定に対応: `__character/hair__` は `character/hair.txt` に対応します。
+  - ネストしたワイルドカード（ワイルドカードファイルの1行に別の `__name__` が含まれる場合）も再帰的に展開されます。
+  - 対応する `.txt` が見つからない場合、`__name__` はそのまま残ります。
+  - `seed`（と `index`）で再現可能。`enable_wildcards`（既定でON）で無効化も可能です。
+
 - **言語**:
   - ノード・ライブラリUIは**既定でEnglish**です（ブラウザ言語への自動追従なし）。
   - 日本語 / 中文（简体）を使う場合は、Prompt Libraryを開き、ヘッダー右上の言語セレクタで切り替えてください。選択はブラウザごとに保存され、ライブラリには即時反映されます（ノード上のボタン表示はページ再読み込み後に反映）。
@@ -110,6 +117,7 @@ ComfyUI/
 | `seed` | ランダムソート再現用。`sort_mode=random` のときのみ有効 |
 | `use_selection` | ライブラリ選択を使用するか（Selボタンで切替）。libraryモード時のみ有効 |
 | `file` | `directory` 配下のファイル名（例: `hero.txt`）。single_fileモード時のみ有効。ライブラリでファイルをチェックし **Apply to Node** で反映 |
+| `enable_wildcards` | 出力プロンプト中の `__name__` を展開するか（上記ワイルドカード参照）。全モード共通 |
 
 出力: `STRING` × 1（`CLIP Text Encode` 等に接続）。
 
@@ -129,9 +137,10 @@ ComfyUI/
 | `seed` | ❌ 無視される | ⚠️ `sort_mode=random` のときのみ有効 | ⚠️ `sort_mode=random` のときのみ有効 |
 | `use_selection` / `Sel`ボタン | ❌ 無意味（ボタンは無効化済み） | ✅ | ❌ 無意味（ボタンは無効化済み） |
 | `selected_files` | ❌ 無視される | ✅ | ❌ 無視される |
-| `Lib`ボタン | ❌ 無効化済み | ✅（フォルダ＋複数ファイル選択） | ✅（フォルダ＋1ファイル選択） |
+| `Lib`ボタン | ✅（ワイルドカードファイルの参照用。**Apply to Node**を押すとlibraryモードに切り替わる） | ✅（フォルダ＋複数ファイル選択） | ✅（フォルダ＋1ファイル選択） |
 | `control after generate` | ❌ seed自体が無意味のため連動して無意味 | ⚠️ random時のみ意味あり | ⚠️ random時のみ意味あり |
 | `file`（ノード最下部に表示） | ❌ 無視される | ❌ 無視される | ✅ 対象ファイル本体 |
+| `enable_wildcards` | ✅ | ✅ | ✅ |
 | プレビュー＋カウンタ | ✅ | ✅ | ✅ |
 
 無効なウィジェットは減光表示されます（半透明＋値非表示＋操作不可）。値は保持されるため、モードを戻せば設定はそのまま使えます。
