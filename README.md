@@ -19,12 +19,22 @@ A ComfyUI custom node that feeds text prompts from a folder one at a time. Suppo
 </tr>
 <tr>
 <td align="center" width="50%">
+<img src="docs/5_node_single.png" width="320" alt="single_file mode"><br>
+③ <code>single_file</code> mode: feed one file as a plain material/word list (no wildcards)
+</td>
+<td align="center" width="50%">
+<img src="docs/6_node_prompt.png" width="320" alt="prompt mode"><br>
+④ <code>prompt</code> mode: feed one file as sentences, wildcards available (file version of <code>edit</code>)
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
 <img src="docs/3_library.png" width="320" alt="Prompt Library"><br>
-③ Prompt Library: a 3-pane picker for browsing/editing folders and files
+⑤ Prompt Library: a 3-pane picker for browsing/editing folders and files
 </td>
 <td align="center" width="50%">
 <img src="docs/4_external_paths.png" width="320" alt="External Paths"><br>
-④ External Paths: register other node packs' <code>.txt</code> data folders for reuse
+⑥ External Paths: register other node packs' <code>.txt</code> data folders for reuse
 </td>
 </tr>
 </table>

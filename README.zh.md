@@ -19,12 +19,22 @@
 </tr>
 <tr>
 <td align="center" width="50%">
+<img src="docs/5_node_single.png" width="320" alt="single_file mode"><br>
+③ <code>single_file</code> 模式：将单个文件作为单词/素材列表提供（无通配符）
+</td>
+<td align="center" width="50%">
+<img src="docs/6_node_prompt.png" width="320" alt="prompt mode"><br>
+④ <code>prompt</code> 模式：将单个文件作为句子提供，可用通配符（<code>edit</code> 的文件版）
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
 <img src="docs/3_library.png" width="320" alt="Prompt Library"><br>
-③ Prompt Library：三栏式文件夹/文件浏览与编辑
+⑤ Prompt Library：三栏式文件夹/文件浏览与编辑
 </td>
 <td align="center" width="50%">
 <img src="docs/4_external_paths.png" width="320" alt="External Paths"><br>
-④ External Paths：注册其他节点包的 <code>.txt</code> 数据文件夹以复用
+⑥ External Paths：注册其他节点包的 <code>.txt</code> 数据文件夹以复用
 </td>
 </tr>
 </table>

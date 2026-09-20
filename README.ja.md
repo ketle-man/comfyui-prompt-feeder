@@ -19,12 +19,22 @@
 </tr>
 <tr>
 <td align="center" width="50%">
+<img src="docs/5_node_single.png" width="320" alt="single_file mode"><br>
+③ <code>single_file</code>モード：1ファイルを単語・素材リストとして供給（ワイルドカードなし）
+</td>
+<td align="center" width="50%">
+<img src="docs/6_node_prompt.png" width="320" alt="prompt mode"><br>
+④ <code>prompt</code>モード：1ファイルを文として供給（ワイルドカード可、<code>edit</code>のファイル版）
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
 <img src="docs/3_library.png" width="320" alt="Prompt Library"><br>
-③ Prompt Library：3ペインでフォルダ・ファイルを選択／編集
+⑤ Prompt Library：3ペインでフォルダ・ファイルを選択／編集
 </td>
 <td align="center" width="50%">
 <img src="docs/4_external_paths.png" width="320" alt="External Paths"><br>
-④ External Paths：他ノードの<code>.txt</code>データを個別パス登録して流用
+⑥ External Paths：他ノードの<code>.txt</code>データを個別パス登録して流用
 </td>
 </tr>
 </table>
