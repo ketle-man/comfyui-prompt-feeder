@@ -5,11 +5,12 @@
     "inputs": {
       "mode": {
         "name": "mode",
-        "tooltip": "edit (type directly) / library (pick files) / single_file (pick one file, use start_index/end_index for a line range)",
+        "tooltip": "edit (type directly) / library (pick files) / single_file (pick one file as a plain word/material list, no wildcard expansion) / prompt (pick one file as prompt sentences, wildcards available; file version of edit)",
         "options": {
           "edit": "edit",
           "library": "library",
-          "single_file": "single_file"
+          "single_file": "single_file",
+          "prompt": "prompt"
         }
       },
       "text": {
@@ -56,7 +57,7 @@
       },
       "enable_wildcards": {
         "name": "enable_wildcards",
-        "tooltip": "Replace __name__ tokens in the resulting prompt with a random line from name.txt (searched in source_root first, then prompt-feeder-data and the other registered data sources; subfolders allowed: __dir/name__)."
+        "tooltip": "Replace __name__ tokens in the resulting prompt with a random line from name.txt (searched in source_root first, then prompt-feeder-data and the other registered data sources, then the selected directory; subfolders allowed: __dir/name__). Ignored in single_file mode. In library mode, files referenced by __name__ from other selected files are excluded from the prompt list."
       }
     },
     "outputs": {

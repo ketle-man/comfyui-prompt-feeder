@@ -269,7 +269,8 @@ app.registerExtension({
 				const modeW = node.widgets?.find(w => w.name === "mode");
 				const applyMode = (modeVal) => {
 					const isLib = modeVal === "library";
-					const isSingle = modeVal === "single_file";
+					// single_file（素材供給専用）と prompt（editのファイル版）は1ファイル選択
+					const isSingle = modeVal === "single_file" || modeVal === "prompt";
 					const isPathMode = isLib || isSingle;
 					selBtn.disabled = !isLib;
 					selBtn.style.opacity = isLib ? "1" : "0.4";
@@ -292,6 +293,9 @@ app.registerExtension({
 						const w = node.widgets?.find(w => w.name === name);
 						if (w) w.disabled = !isSingle;
 					}
+					// single_file はワイルドカードを展開しない（素材供給専用）
+					const wcW = node.widgets?.find(w => w.name === "enable_wildcards");
+					if (wcW) wcW.disabled = modeVal === "single_file";
 					node.setDirtyCanvas(true, true);
 				};
 				if (modeW) {

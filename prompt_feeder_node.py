@@ -121,10 +121,13 @@ def natural_sort_key(s):
 
 
 def _collect_library_prompts(root, directory, sort_mode, start_index, end_index,
-                            seed, use_selection=True, selected_files="[]") -> list:
+                            seed, use_selection=True, selected_files="[]",
+                            exclude_wildcard_refs=False) -> list:
     """
     libraryモード用のプロンプト一覧を構築する。
     各ファイルの内容を行分割し、1行=1プロンプトとして連結して返す（editモードと同一扱い）。
+    exclude_wildcard_refs=True の場合、対象ファイル内の __name__ で参照されている
+    他の対象ファイル（ワイルドカード用ファイル）はプロンプト一覧から除外する。
     """
     # パスの解決と検証
     target_dir = resolve_safe_path(root, directory)
@@ -159,6 +162,11 @@ def _collect_library_prompts(root, directory, sort_mode, start_index, end_index,
 
     if not files:
         raise FileNotFoundError("No .txt files found in the specified directory")
+
+    if exclude_wildcard_refs:
+        # 相互参照などで全ファイルが除外される場合は、除外せず全ファイルを対象に戻す
+        referenced = _referenced_wildcard_files(root, directory, target_dir, files)
+        files = [f for f in files if f not in referenced] or files
 
     if sort_mode == "descending":
         files.reverse()
@@ -249,15 +257,18 @@ def _wildcard_search_roots(root):
     return [r for r in roots if not (r in seen or seen.add(r))]
 
 
-def _resolve_wildcard_file(root, name):
+def _resolve_wildcard_file(root, name, directory=""):
     """
     __name__ に対応する .txt ファイルの絶対パスを返す（見つからなければNone）。
-    選択中のrootで見つからなければ他のデータソースも順に検索する。
+    選択中のrootで見つからなければ他のデータソースも順に検索し、
+    それでも見つからなければ選択中のフォルダ（directory）内も検索する。
     """
     for candidate_root in _wildcard_search_roots(root):
         full = _resolve_wildcard_file_in_root(candidate_root, name)
         if full is not None:
             return full
+    if directory:
+        return _resolve_wildcard_file_in_root(root, f"{directory}/{name}")
     return None
 
 
@@ -292,7 +303,38 @@ def _resolve_wildcard_file_in_root(root, name):
     return None
 
 
-def _expand_wildcards(text, root, rng, _depth=0) -> str:
+def _referenced_wildcard_files(root, directory, target_dir, files) -> set:
+    """
+    files（target_dir直下のファイル名）の中身が __name__ で参照している、
+    files 内の他ファイル名の集合を返す（自ファイルへの参照は無視）。
+    ワイルドカード用ファイルをプロンプトとして数えないための判定に使う。
+    """
+    real_dir = os.path.normcase(os.path.realpath(target_dir))
+    by_path = {os.path.normcase(os.path.realpath(os.path.join(target_dir, f))): f for f in files}
+    referenced = set()
+    for fname in files:
+        full = os.path.join(target_dir, fname)
+        try:
+            if os.path.getsize(full) > MAX_TEXT_BYTES:
+                continue
+            with open(full, "r", encoding="utf-8") as f:
+                content = f.read()
+        except OSError:
+            continue
+        for match in WILDCARD_PATTERN.finditer(content):
+            resolved = _resolve_wildcard_file(root, match.group(1), directory)
+            if resolved is None:
+                continue
+            resolved = os.path.normcase(os.path.realpath(resolved))
+            if os.path.dirname(resolved) != real_dir:
+                continue
+            target = by_path.get(resolved)
+            if target is not None and target != fname:
+                referenced.add(target)
+    return referenced
+
+
+def _expand_wildcards(text, root, rng, directory="", _depth=0) -> str:
     """
     テキスト中の __name__ をワイルドカードファイル（name.txt）内のランダムな1行に置換する。
     対応ファイルが見つからない場合はそのまま残す。ネストしたワイルドカードも再帰的に展開する。
@@ -302,7 +344,7 @@ def _expand_wildcards(text, root, rng, _depth=0) -> str:
 
     def _replace(match):
         name = match.group(1)
-        full = _resolve_wildcard_file(root, name)
+        full = _resolve_wildcard_file(root, name, directory)
         if full is None:
             return match.group(0)
         try:
@@ -316,7 +358,7 @@ def _expand_wildcards(text, root, rng, _depth=0) -> str:
         if not lines:
             return match.group(0)
         chosen = rng.choice(lines)
-        return _expand_wildcards(chosen, root, rng, _depth + 1)
+        return _expand_wildcards(chosen, root, rng, directory, _depth + 1)
 
     return WILDCARD_PATTERN.sub(_replace, text)
 
@@ -611,13 +653,13 @@ def _setup_routes():
             try:
                 if mode == "edit":
                     prompts = [line.strip() for line in (text or "").splitlines() if line.strip()]
-                elif mode == "single_file":
+                elif mode in ("single_file", "prompt"):
                     prompts = _collect_single_file_prompts(
                         root, directory, filename, sort_mode, start_index, end_index, seed)
                 else:
                     prompts = _collect_library_prompts(
                         root, directory, sort_mode, start_index, end_index,
-                        seed, use_selection, selected_files)
+                        seed, use_selection, selected_files, exclude_wildcard_refs=enable_wildcards)
             except (FileNotFoundError, ValueError) as e:
                 return web.json_response({"total": 0, "index": 0, "prompt": "", "error": str(e)})
             except Exception:
@@ -626,8 +668,10 @@ def _setup_routes():
                 return web.json_response({"total": 0, "index": 0, "prompt": ""})
             i = min(index, len(prompts) - 1)
             prompt = prompts[i]
-            if enable_wildcards:
-                prompt = _expand_wildcards(prompt, root, random.Random(f"{seed}:{i}"))
+            # single_file は素材供給専用のためワイルドカードを展開しない
+            if enable_wildcards and mode != "single_file":
+                prompt = _expand_wildcards(
+                    prompt, root, random.Random(f"{seed}:{i}"), "" if mode == "edit" else directory)
             return web.json_response({
                 "total": len(prompts),
                 "index": i,
@@ -735,7 +779,7 @@ class PromptFeeder:
         root_choices = [ROOT_PFDATA] + sorted(_load_external_paths().keys())
         return {
             "required": {
-                "mode": (["edit", "library", "single_file"],),
+                "mode": (["edit", "library", "single_file", "prompt"],),
                 "text": ("STRING", {
                     "multiline": True,
                     "default": "",
@@ -761,14 +805,16 @@ class PromptFeeder:
                 # 新規ウィジェットは必ず末尾に追加する
                 "file": ("STRING", {
                     "default": "",
-                    "tooltip": "Filename (e.g. hero.txt) within the directory above. Used in single_file mode; "
-                               "start_index/end_index then select a line range within this file."
+                    "tooltip": "Filename (e.g. hero.txt) within the directory above. Used in single_file and prompt "
+                               "modes; start_index/end_index then select a line range within this file."
                 }),
                 "enable_wildcards": ("BOOLEAN", {
                     "default": True,
                     "tooltip": "Replace __name__ tokens in the resulting prompt with a random line from "
                                "name.txt (searched in source_root first, then prompt-feeder-data and the other "
-                               "registered data sources; subfolders allowed: __dir/name__)."
+                               "registered data sources, then the selected directory; subfolders allowed: "
+                               "__dir/name__). Ignored in single_file mode. In library mode, files referenced "
+                               "by __name__ from other selected files are excluded from the prompt list."
                 }),
             },
             "hidden": {
@@ -796,20 +842,22 @@ class PromptFeeder:
             prompts = [line.strip() for line in lines if line.strip()]
             if not prompts:
                 raise ValueError("No prompts found: enter at least one non-empty line in edit mode")
-        elif mode == "single_file":
+        elif mode in ("single_file", "prompt"):
             prompts = _collect_single_file_prompts(
                 root, directory, file, sort_mode, start_index, end_index, seed)
         else:
             # パスの解決と検証
             prompts = _collect_library_prompts(
                 root, directory, sort_mode, start_index, end_index,
-                seed, use_selection, selected_files)
+                seed, use_selection, selected_files, exclude_wildcard_refs=enable_wildcards)
 
         total_in_range = len(prompts)
         current = prompts[min(index, total_in_range - 1)]
 
-        if enable_wildcards:
-            current = _expand_wildcards(current, root, random.Random(f"{seed}:{index}"))
+        # single_file は素材供給専用のためワイルドカードを展開しない
+        if enable_wildcards and mode != "single_file":
+            current = _expand_wildcards(
+                current, root, random.Random(f"{seed}:{index}"), "" if mode == "edit" else directory)
 
         next_index = index + 1
         has_next = next_index < total_in_range

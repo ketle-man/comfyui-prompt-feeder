@@ -5,11 +5,12 @@
     "inputs": {
       "mode": {
         "name": "モード",
-        "tooltip": "edit（直接記入）/ library（ファイル選択）/ single_file（1ファイルを選択し、start_index/end_indexで行範囲を指定）",
+        "tooltip": "edit（直接記入）/ library（ファイル選択）/ single_file（1ファイルを単語・素材リストとして純粋に供給。ワイルドカード展開なし）/ prompt（1ファイルを文として供給。ワイルドカード使用可。editのファイル版）",
         "options": {
           "edit": "edit",
           "library": "library",
-          "single_file": "single_file"
+          "single_file": "single_file",
+          "prompt": "prompt"
         }
       },
       "text": {
@@ -56,7 +57,7 @@
       },
       "enable_wildcards": {
         "name": "ワイルドカード展開",
-        "tooltip": "出力プロンプト中の __name__ を name.txt 内のランダムな1行に置換します（source_root → prompt-feeder-data → 登録済みの他のデータソースの順に検索、__dir/name__ でサブフォルダ指定も可）。"
+        "tooltip": "出力プロンプト中の __name__ を name.txt 内のランダムな1行に置換します（source_root → prompt-feeder-data → 登録済みの他のデータソース → 選択中のフォルダの順に検索、__dir/name__ でサブフォルダ指定も可）。single_fileモードでは無効。libraryモードでは、他の選択ファイルから __name__ で参照されているファイルはプロンプト一覧から自動除外されます。"
       }
     },
     "outputs": {

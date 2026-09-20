@@ -5,11 +5,12 @@
     "inputs": {
       "mode": {
         "name": "模式",
-        "tooltip": "edit（直接输入）/ library（选择文件）/ single_file（选择单个文件，用start_index/end_index指定行范围）",
+        "tooltip": "edit（直接输入）/ library（选择文件）/ single_file（将单个文件作为单词/素材列表原样提供，不展开通配符）/ prompt（将单个文件作为句子提供，可使用通配符；edit 的文件版）",
         "options": {
           "edit": "edit",
           "library": "library",
-          "single_file": "single_file"
+          "single_file": "single_file",
+          "prompt": "prompt"
         }
       },
       "text": {
@@ -56,7 +57,7 @@
       },
       "enable_wildcards": {
         "name": "通配符展开",
-        "tooltip": "将结果提示词中的 __name__ 替换为 name.txt 中的随机一行（依次在 source_root、prompt-feeder-data 及其他已注册的数据源中搜索，支持 __dir/name__ 形式的子文件夹）。"
+        "tooltip": "将结果提示词中的 __name__ 替换为 name.txt 中的随机一行（依次在 source_root、prompt-feeder-data 及其他已注册的数据源、所选文件夹中搜索，支持 __dir/name__ 形式的子文件夹）。single_file 模式下无效。library 模式下，被其他所选文件通过 __name__ 引用的文件会自动从提示词列表中排除。"
       }
     },
     "outputs": {

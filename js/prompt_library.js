@@ -220,8 +220,10 @@ function buildModal(node) {
         return currentRoot === ROOT_PFDATA;
     }
 
+    // single_file / prompt モードは1ファイルのみ選択可能
     function isSingleFileMode() {
-        return node.widgets?.find(w => w.name === "mode")?.value === "single_file";
+        const mode = node.widgets?.find(w => w.name === "mode")?.value;
+        return mode === "single_file" || mode === "prompt";
     }
 
     function updateWriteUI() {
